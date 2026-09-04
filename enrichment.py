@@ -3,10 +3,8 @@ Enrichment Feature Implementation for dermatopath-melanoma-agent.
 Generated based on domain-specific requirements in specifications.
 """
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 import datetime
-import math
-import json
 
 # =============================================================================
 # 1. OVERVIEW
@@ -209,54 +207,10 @@ class Enrichment2BreslowMeasurementWithImageQualityGateEngine:
         return res
 
 # =============================================================================
-# 5. IMPLEMENTATION
+# 5. IMPLEMENTATION (Breslow Validator)
 # =============================================================================
-@dataclass
-class ImplementationEngineResult:
-    feature_name: str = "Implementation"
-    status: str = "OPTIMAL"
-    score: float = 0.0
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    alerts: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
-
-class ImplementationEngine:
-    """
-    Implementation: **File**: dermatopath_melanoma/breslow_validator.py (new file)
-    """
-    def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
-        self.threshold = threshold
-        self.config = config or {}
-        self.history: List[ImplementationEngineResult] = []
-
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> ImplementationEngineResult:
-        alerts = []
-        recs = []
-        status = "OPTIMAL"
-        score = round(float(primary_value), 3)
-
-        if primary_value > self.threshold * 2:
-            status = "CRITICAL_ALERT"
-            alerts.append(f"Implementation: Primary value {primary_value:.2f} breached critical threshold ({self.threshold * 2:.2f})")
-            recs.append("Initiate immediate protocol review and escalate to attending lead.")
-        elif primary_value > self.threshold:
-            status = "WARNING"
-            alerts.append(f"Implementation: Value {primary_value:.2f} exceeds baseline threshold ({self.threshold:.2f})")
-            recs.append("Increase monitoring frequency and perform secondary verification.")
-        else:
-            recs.append("Parameters nominal under standard operating bounds.")
-
-        res = ImplementationEngineResult(
-            feature_name="Implementation",
-            status=status,
-            score=score,
-            metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
-            alerts=alerts,
-            recommendations=recs
-        )
-        self.history.append(res)
-        return res
+# ImplementationEngineResult and ImplementationEngine defined in section 3 (lines 114-159).
+# Reused here to avoid duplicate class definitions.
 
 # =============================================================================
 # 6. ENRICHMENT #3: SENTINEL LYMPH NODE METASTASIS PREDICTION AGENT
@@ -309,54 +263,10 @@ class Enrichment3SentinelLymphNodeMetastasisPredictionAgent:
         return res
 
 # =============================================================================
-# 7. IMPLEMENTATION
+# 7. IMPLEMENTATION (SLN Predictor)
 # =============================================================================
-@dataclass
-class ImplementationEngineResult:
-    feature_name: str = "Implementation"
-    status: str = "OPTIMAL"
-    score: float = 0.0
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    alerts: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
-
-class ImplementationEngine:
-    """
-    Implementation: **File**: dermatopath_melanoma/sln_predictor.py (new file)
-    """
-    def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
-        self.threshold = threshold
-        self.config = config or {}
-        self.history: List[ImplementationEngineResult] = []
-
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> ImplementationEngineResult:
-        alerts = []
-        recs = []
-        status = "OPTIMAL"
-        score = round(float(primary_value), 3)
-
-        if primary_value > self.threshold * 2:
-            status = "CRITICAL_ALERT"
-            alerts.append(f"Implementation: Primary value {primary_value:.2f} breached critical threshold ({self.threshold * 2:.2f})")
-            recs.append("Initiate immediate protocol review and escalate to attending lead.")
-        elif primary_value > self.threshold:
-            status = "WARNING"
-            alerts.append(f"Implementation: Value {primary_value:.2f} exceeds baseline threshold ({self.threshold:.2f})")
-            recs.append("Increase monitoring frequency and perform secondary verification.")
-        else:
-            recs.append("Parameters nominal under standard operating bounds.")
-
-        res = ImplementationEngineResult(
-            feature_name="Implementation",
-            status=status,
-            score=score,
-            metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
-            alerts=alerts,
-            recommendations=recs
-        )
-        self.history.append(res)
-        return res
+# ImplementationEngineResult and ImplementationEngine defined in section 3 (lines 114-159).
+# Reused here to avoid duplicate class definitions.
 
 # =============================================================================
 # 8. ENRICHMENT #4: ULCERATION SURFACE MAPPING AGENT
@@ -418,9 +328,7 @@ class DermatopathmelanomaagentEnrichmentSuite:
         self.enrichment1ajcc8thed = Enrichment1Ajcc8thEditionTnmStagingAgent()
         self.implementationengine = ImplementationEngine()
         self.enrichment2breslowme = Enrichment2BreslowMeasurementWithImageQualityGateEngine()
-        self.implementationengine = ImplementationEngine()
         self.enrichment3sentinell = Enrichment3SentinelLymphNodeMetastasisPredictionAgent()
-        self.implementationengine = ImplementationEngine()
         self.enrichment4ulceratio = Enrichment4UlcerationSurfaceMappingAgent()
 
     def execute_all(self, primary_val: float = 1.5, secondary_val: float = 0.5) -> Dict[str, Any]:
@@ -429,9 +337,7 @@ class DermatopathmelanomaagentEnrichmentSuite:
         results["Enrichment1Ajcc8thEditionTnmStagingAgent"] = self.enrichment1ajcc8thed.evaluate(primary_val, secondary_val)
         results["ImplementationEngine"] = self.implementationengine.evaluate(primary_val, secondary_val)
         results["Enrichment2BreslowMeasurementWithImageQualityGateEngine"] = self.enrichment2breslowme.evaluate(primary_val, secondary_val)
-        results["ImplementationEngine"] = self.implementationengine.evaluate(primary_val, secondary_val)
         results["Enrichment3SentinelLymphNodeMetastasisPredictionAgent"] = self.enrichment3sentinell.evaluate(primary_val, secondary_val)
-        results["ImplementationEngine"] = self.implementationengine.evaluate(primary_val, secondary_val)
         results["Enrichment4UlcerationSurfaceMappingAgent"] = self.enrichment4ulceratio.evaluate(primary_val, secondary_val)
         return results
 

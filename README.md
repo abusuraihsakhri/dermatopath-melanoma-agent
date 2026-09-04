@@ -1,6 +1,6 @@
 # Dermatopath Melanoma Agent
 
-> **Domain:** Digital Pathology & Quantitative Histopathology  
+> **Domain:** Digital Pathology & Quantitative Histopathology
 > **Reference Guidelines & Standards:** `College of American Pathologists (CAP) Synoptic Protocols & DICOM WSI`
 
 <div align="center">
@@ -18,7 +18,7 @@
 
 ## 📖 What It Does
 
-**Dermatopath Melanoma Agent** is an advanced analytical and computational platform implementing Cutaneous Melanoma Microstaging (Breslow/Clark) & Margin Safety.
+**Dermatopath Melanoma Agent** is an advanced analytical and computational platform implementing Cutaneous Melanoma Microstaging (Breslow/Clark) & Margin Safety. It provides multi-agent evaluation of pathology metrics with cryptographic audit trails and zero-PHI outbound protection.
 
 ---
 
@@ -35,38 +35,64 @@
 
 ---
 
-## 💻 CLI Quickstart & Usage
+## 💻 Installation
 
-### 1. Guided Interactive Mode
 ```bash
-python cli.py
+# Clone the repository
+git clone https://github.com/abusuraihsakhri/dermatopath-melanoma-agent.git
+cd dermatopath-melanoma-agent
+
+# Install dependencies
+pip install fastapi uvicorn pydantic pytest
 ```
 
-### 2. Direct Parameterized Evaluation
+---
+
+## 💻 CLI Quickstart & Usage
+
+### 1. Single Task Evaluation
 ```bash
-python cli.py --task-id <value> --target <value> --primary <value> --secondary <value>
+python cli.py audit --task-id TASK-001 --primary 28.5 --secondary 14.2 --critical --status DISCORDANT
+```
+
+### 2. System Chat Query
+```bash
+python cli.py chat "What is the system status?"
+```
+
+### 3. Batch CSV Processing
+```bash
+python cli.py batch -i sample.csv -o results.csv
+```
+
+### 4. Verify Audit Trail Integrity
+```bash
+python cli.py verify-audit
+```
+
+### 5. Launch REST API Server
+```bash
+python cli.py serve --host 127.0.0.1 --port 8000
 ```
 
 ### Parameter Reference
-- `--task-id`: Specifies input measurement or parameter value.
-- `--target`: Specifies input measurement or parameter value.
-- `--primary`: Specifies input measurement or parameter value.
-- `--secondary`: Specifies input measurement or parameter value.
-- `--critical`: Specifies input measurement or parameter value.
-- `--status`: Specifies input measurement or parameter value.
-- `--input`: Specifies input measurement or parameter value.
-- `--output`: Specifies input measurement or parameter value.
+- `--task-id`: Unique task / case identifier
+- `--target`: Target entity or specimen identifier
+- `--primary`: Primary measurement value (float)
+- `--secondary`: Secondary measurement value (float)
+- `--critical`: Flag for critical/emergency escalation
+- `--status`: Status descriptor (e.g., NOMINAL, DISCORDANT)
 
-### Input Data Schema
+### Input Data Schema (CSV Batch)
 
 | Field | Description | Requirement |
 |:------|:------------|:------------|
-| `case_id` | Parameter / observation metric | Required |
-| `patient_synthetic_id` | Parameter / observation metric | Required |
-| `metric_primary` | Parameter / observation metric | Required |
-| `metric_secondary` | Parameter / observation metric | Required |
-| `is_stat` | Parameter / observation metric | Required |
-| `status_flag` | Parameter / observation metric | Required |
+| `task_id` | Task / case identifier | Required |
+| `target_identifier` | Target entity identifier | Required |
+| `primary_metric` | Primary measurement value | Required |
+| `secondary_metric` | Secondary measurement value | Optional (default: 0.0) |
+| `is_critical_flag` | Critical escalation flag | Optional (default: false) |
+| `status_descriptor` | Status descriptor | Optional (default: NOMINAL) |
 
 ---
 
@@ -77,6 +103,18 @@ python cli.py --task-id <value> --target <value> --primary <value> --secondary <
 * **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
 * **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
 * **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
+
+### Security Configuration
+
+Set the `AUDIT_SECRET_KEY` environment variable to a secure random value for production deployments:
+
+```bash
+# Linux/macOS
+export AUDIT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
+
+# Windows PowerShell
+$env:AUDIT_SECRET_KEY = -join ((1..32 | ForEach-Object { '{0:x}' -f (Get-Random -Max 16) }))
+```
 
 ---
 
@@ -91,7 +129,7 @@ pytest -v
 Execute high-throughput batch simulation benchmarks:
 
 ```bash
-python simulator.py --tasks 1000 --concurrency 8
+python simulator.py 1000
 ```
 
 ---
@@ -100,5 +138,45 @@ python simulator.py --tasks 1000 --concurrency 8
 
 ```bash
 docker build -t dermatopath-melanoma-agent .
-docker run -p 8000:8000 dermatopath-melanoma-agent
+docker run -p 8000:8000 -e AUDIT_SECRET_KEY=your-secure-key dermatopath-melanoma-agent
 ```
+
+Or using Docker Compose:
+
+```bash
+AUDIT_SECRET_KEY=your-secure-key docker-compose up -d
+```
+
+---
+
+## 📁 Project Structure
+
+```
+dermatopath-melanoma-agent/
+├── agents/                          # Core agent modules
+│   ├── api.py                       # FastAPI REST endpoints
+│   ├── base.py                      # Security, PHI guard, audit trail
+│   ├── learning.py                  # Bayesian calibration engine
+│   ├── llm_factory.py               # LLM provider factory
+│   ├── metrics.py                   # Prometheus metrics
+│   ├── models.py                    # Pydantic data models
+│   ├── streamer.py                  # WebSocket telemetry
+│   ├── supervisor.py                # Supervisor orchestrator
+│   └── workers.py                   # Specialized worker agents
+├── dermatopath_melanoma_agent/      # Alternative package structure
+├── tests/                           # Test suite
+├── web/                             # Web operations console
+├── cli.py                           # Main CLI entry point
+├── derm_melanoma.py                 # Legacy CLI (v1)
+├── enrichment.py                    # Enrichment feature modules
+├── simulator.py                     # High-throughput simulator
+├── pyproject.toml                   # Project configuration
+├── Dockerfile                       # Container build
+└── docker-compose.yml               # Container orchestration
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
