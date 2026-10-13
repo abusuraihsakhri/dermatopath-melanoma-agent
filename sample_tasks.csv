@@ -1,0 +1,4 @@
+task_id,target_identifier,primary_metric,secondary_metric,status_descriptor,is_critical_flag
+DEMO-001,SAMPLE-001,29.4,14.8,DISCORDANT_ANOMALY,true
+DEMO-002,SAMPLE-002,10,4,NOMINAL,false
+DEMO-003,SAMPLE-003,26,9,REVIEW,false
