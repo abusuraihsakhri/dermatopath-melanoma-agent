@@ -4,7 +4,7 @@ FastAPI REST API Server for Dermatopath Melanoma Agent.
 from typing import Dict, Any, List
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from .base import AuditLogger, PHIGuard
+from .base import AuditLogger, PHIGuard, SecurityException
 from .models import SystemTaskPayload, ConsensusDossier
 from .supervisor import SystemSupervisor
 
@@ -23,7 +23,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "dermatopath-melanoma-agent", "domain": "Digital Pathology & Histology Systems", "standard": "CAP Cancer Protocols / DICOM WSI PS3.16", "version": "3.0.0-ENTERPRISE"}
+    return {"status": "HEALTHY", "service": "dermatopath-melanoma-agent", "domain": "Digital Pathology & Histology Systems", "standard": "Demonstration only (not validated melanoma staging)", "version": "3.0.0-ENTERPRISE"}
 
 
 @app.get("/metrics")
@@ -37,7 +37,10 @@ def metrics():
 
 @app.post("/api/audit")
 def api_audit(payload: SystemTaskPayload):
-    dossier = supervisor.process_task(payload)
+    try:
+        dossier = supervisor.process_task(payload)
+    except SecurityException:
+        raise HTTPException(status_code=422, detail="Possible direct identifier detected; supply synthetic data only.")
     return dossier.to_dict()
 
 
@@ -46,10 +49,11 @@ def api_chat(req: ChatRequest):
     try:
         ans = supervisor.query_supervisory_chat(req.query)
         return {"response": ans}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except SecurityException:
+        raise HTTPException(status_code=422, detail="Possible direct identifier detected; supply synthetic data only.")
 
 
 @app.get("/api/audit/logs")
 def api_audit_logs():
-    return {"audit_trail": AuditLogger.get_trail(), "verified": AuditLogger.verify_integrity()}
+    # Avoid exposing task identifiers and audit metadata through an unauthenticated endpoint.
+    return {"audit_blocks_total": len(AuditLogger.get_trail()), "verified": AuditLogger.verify_integrity()}
