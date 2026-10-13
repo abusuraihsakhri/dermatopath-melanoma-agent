@@ -221,6 +221,14 @@ class TestAuditIntegrityRegressions:
         trail.get_trail()[0]["current_hash"] = "overwritten"
         assert trail.verify_integrity() is True
 
+
+    def test_delimiter_reassignment_cannot_preserve_signature(self):
+        trail = AuditTrail(secret_key="signature-test-key")
+        trail.log("a|b", "c", "EVENT", {"sample": "demo"})
+        trail.logs[0]["actor"] = "a"
+        trail.logs[0]["actor_tier"] = "b|c"
+        assert trail.verify_integrity() is False
+
     def test_audit_actor_with_phi_is_blocked(self):
         trail = AuditTrail(secret_key="signature-test-key")
         with pytest.raises(SecurityException):
