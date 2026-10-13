@@ -1,182 +1,70 @@
 # Dermatopath Melanoma Agent
 
-> **Domain:** Digital Pathology & Quantitative Histopathology
-> **Reference Guidelines & Standards:** `College of American Pathologists (CAP) Synoptic Protocols & DICOM WSI`
+### [Open the Browser Demonstration →](https://abusuraihsakhri.github.io/dermatopath-melanoma-agent/)
 
-<div align="center">
+A deterministic rules demonstrator and Python CLI/API for testing synthetic pathology-workflow inputs. The public browser interface uses JavaScript and runs without a Python server; the Python implementations are separate.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+> **Clinical limitation:** This repository does **not** implement validated AJCC 8 melanoma T/N/M staging, Breslow measurement from images, ulceration detection, deep/peripheral margin clearance, or clinical decision support. Generic thresholds used by the demonstration are not CAP or AJCC decision limits. Use synthetic data only; never rely on results for patient care.
 
-</div>
+## Browser demonstration
 
----
+Open the link above (or serve the repository locally and visit **web/**). It runs the same **illustrative** rules as **agents/workers.py**:
 
-## 📖 What It Does
+| Input | Demonstration behavior |
+|---|---|
+| Primary metric above 25 | Elevated-rule alert |
+| Secondary metric above 12, or critical-priority flag | Elevated alert; critical tier only when the flag is set |
+| Descriptor containing DISCORDANT, ANOMALY, MUTANT, VIOLATION, FAIL, or REJECT | Keyword-match alert |
 
-**Dermatopath Melanoma Agent** is an advanced analytical and computational platform implementing Cutaneous Melanoma Microstaging (Breslow/Clark) & Margin Safety. It provides multi-agent evaluation of pathology metrics with cryptographic audit trails and zero-PHI outbound protection.
+Enter synthetic identifiers and finite numeric inputs, choose **Evaluate rules**, review the rule matches and structured JSON, and optionally download the JSON result. No values are sent to a server, stored in browser storage, or attached to an audit ledger by the static page. The page does not detect or remove protected health information (PHI).
 
----
+The GitHub Pages entry point is **index.html**, which opens **web/index.html**. The web interface does not call the Python API.
 
-## ⚙️ Key Capabilities & Algorithmic Modules
+## Python installation
 
-### 🔬 Core Algorithmic & Evaluation Engines
+Requires Python 3.9 or newer.
 
-- **`Severity`** — dedicated module for severity evaluation and state verification.
-- **`DomainKnowledgeRegistry`**: Enterprise domain rules, guideline matrices, and evidence benchmarks.
-- **`AgentAlert`** — dedicated module for agent alert evaluation and state verification.
-- **`BreslowMicrostagingAgent`**: Specialized Sub-Agent 1 for dermatopath-melanoma-agent
-- **`MitoticRateAuditorAgent`**: Specialized Sub-Agent 2 for dermatopath-melanoma-agent
-- **`PeripheralMarginAgent`**: Specialized Sub-Agent 3 for dermatopath-melanoma-agent
-
----
-
-## 💻 Installation
-
-```bash
-# Clone the repository
+~~~bash
 git clone https://github.com/abusuraihsakhri/dermatopath-melanoma-agent.git
 cd dermatopath-melanoma-agent
+python -m pip install -e ".[server,test]"
+pytest -q
+~~~
 
-# Install dependencies
-pip install fastapi uvicorn pydantic pytest
-```
+### CLI
 
----
-
-## 💻 CLI Quickstart & Usage
-
-### 1. Single Task Evaluation
-```bash
-python cli.py audit --task-id TASK-001 --primary 28.5 --secondary 14.2 --critical --status DISCORDANT
-```
-
-### 2. System Chat Query
-```bash
-python cli.py chat "What is the system status?"
-```
-
-### 3. Batch CSV Processing
-```bash
-python cli.py batch -i sample.csv -o results.csv
-```
-
-### 4. Verify Audit Trail Integrity
-```bash
+~~~bash
+python cli.py audit --task-id DEMO-001 --target SAMPLE-001 --primary 29.4 --secondary 14.8 --critical --status DISCORDANT
+python cli.py chat "What is the configuration?"
+python cli.py batch -i sample_tasks.csv -o results.csv
 python cli.py verify-audit
-```
-
-### 5. Launch REST API Server
-```bash
 python cli.py serve --host 127.0.0.1 --port 8000
-```
+~~~
 
-### Parameter Reference
-- `--task-id`: Unique task / case identifier
-- `--target`: Target entity or specimen identifier
-- `--primary`: Primary measurement value (float)
-- `--secondary`: Secondary measurement value (float)
-- `--critical`: Flag for critical/emergency escalation
-- `--status`: Status descriptor (e.g., NOMINAL, DISCORDANT)
+The installed **dermatopath-melanoma-engine** executable runs this CLI. The separate **dermatopath-melanoma-legacy** executable preserves the alternative package's CLI. **sample.csv** is for that older input schema; use **sample_tasks.csv** for the primary CLI.
 
-### Input Data Schema (CSV Batch)
+The primary API is in **agents/api.py**. Its **GET /health**, **GET /metrics**, **POST /api/audit**, and **POST /api/chat** routes are available when serving. **GET /api/audit/logs** returns only a count and verification result, not task identifiers. **GET /metrics** returns JSON, not Prometheus exposition text. The API has **no authentication**; do not expose it to a public network or send patient data.
 
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `task_id` | Task / case identifier | Required |
-| `target_identifier` | Target entity identifier | Required |
-| `primary_metric` | Primary measurement value | Required |
-| `secondary_metric` | Secondary measurement value | Optional (default: 0.0) |
-| `is_critical_flag` | Critical escalation flag | Optional (default: false) |
-| `status_descriptor` | Status descriptor | Optional (default: NOMINAL) |
+### Docker
 
----
+~~~bash
+docker compose up --build
+~~~
 
-## 🛡️ Security & Enterprise Architecture
+Docker Compose binds port 8000 on **127.0.0.1** by default. Direct Docker usage should also bind loopback (**-p 127.0.0.1:8000:8000**).
 
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
+## Privacy and security notes
 
-### Security Configuration
+- Synthetic inputs are expected. The Python PHI guard is limited regex-based detection, **not** de-identification or HIPAA compliance certification; it can miss sensitive information.
+- The Python audit log uses in-memory chained HMAC-SHA256 signatures. Verification checks each signature and chain link. The log is **not persistent** or an immutable external audit system.
+- Set **AUDIT_SECRET_KEY** for a stable key across application restarts; otherwise a random temporary key is generated. Never commit real keys.
+- The configurable LLM adapter currently returns mock text for every provider option; no external model inference or guideline validation occurs.
+- Additional **dermatopath_melanoma_agent/**, **derm_melanoma.py**, and **enrichment.py** paths remain for compatibility and contain exploratory, nonvalidated rules.
 
-Set the `AUDIT_SECRET_KEY` environment variable to a secure random value for production deployments:
+## Development and testing
 
-```bash
-# Linux/macOS
-export AUDIT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
+CI covers Python 3.10–3.12, source compilation, packaging, dependencies, pytest, and a static browser-rule test using Node.js when available. Run **python -m pip check** to inspect your installed dependency environment. Browsers supporting current JavaScript, Blob, and URL.createObjectURL can run the static page. A build step, Pyodide, and external JavaScript dependencies are not required.
 
-# Windows PowerShell
-$env:AUDIT_SECRET_KEY = -join ((1..32 | ForEach-Object { '{0:x}' -f (Get-Random -Max 16) }))
-```
+## License
 
----
-
-## 🧪 Testing & Verification
-
-Run the automated test suite:
-
-```bash
-pytest -v
-```
-
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py 1000
-```
-
----
-
-## 🐳 Container Deployment
-
-```bash
-docker build -t dermatopath-melanoma-agent .
-docker run -p 8000:8000 -e AUDIT_SECRET_KEY=your-secure-key dermatopath-melanoma-agent
-```
-
-Or using Docker Compose:
-
-```bash
-AUDIT_SECRET_KEY=your-secure-key docker-compose up -d
-```
-
----
-
-## 📁 Project Structure
-
-```
-dermatopath-melanoma-agent/
-├── agents/                          # Core agent modules
-│   ├── api.py                       # FastAPI REST endpoints
-│   ├── base.py                      # Security, PHI guard, audit trail
-│   ├── learning.py                  # Bayesian calibration engine
-│   ├── llm_factory.py               # LLM provider factory
-│   ├── metrics.py                   # Prometheus metrics
-│   ├── models.py                    # Pydantic data models
-│   ├── streamer.py                  # WebSocket telemetry
-│   ├── supervisor.py                # Supervisor orchestrator
-│   └── workers.py                   # Specialized worker agents
-├── dermatopath_melanoma_agent/      # Alternative package structure
-├── tests/                           # Test suite
-├── web/                             # Web operations console
-├── cli.py                           # Main CLI entry point
-├── derm_melanoma.py                 # Legacy CLI (v1)
-├── enrichment.py                    # Enrichment feature modules
-├── simulator.py                     # High-throughput simulator
-├── pyproject.toml                   # Project configuration
-├── Dockerfile                       # Container build
-└── docker-compose.yml               # Container orchestration
-```
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[MIT](LICENSE).
