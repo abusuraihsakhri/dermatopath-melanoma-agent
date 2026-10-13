@@ -193,3 +193,82 @@ class TestBatchErrorHandling:
         content = output_file.read_text()
         # Second row should be processed
         assert "T2" in content
+
+
+class TestAuditIntegrityRegressions:
+    def test_single_block_signature_change_is_detected(self):
+        trail = AuditTrail(secret_key="signature-test-key")
+        trail.log("actor", "tier", "EVENT", {"sample": "demo"})
+        trail.logs[0]["current_hash"] = "0" * 64
+        assert trail.verify_integrity() is False
+
+    def test_final_block_metadata_tampering_is_detected(self):
+        trail = AuditTrail(secret_key="signature-test-key")
+        trail.log("actor", "tier", "EVENT", {"sample": "demo"})
+        trail.log("actor", "tier", "EVENT", {"sample": "demo2"})
+        trail.logs[-1]["event_type"] = "MODIFIED"
+        assert trail.verify_integrity() is False
+
+    def test_missing_block_field_is_invalid(self):
+        trail = AuditTrail(secret_key="signature-test-key")
+        trail.log("actor", "tier", "EVENT", {"sample": "demo"})
+        del trail.logs[0]["payload_hash"]
+        assert trail.verify_integrity() is False
+
+    def test_exposed_trail_is_not_mutable_internal_state(self):
+        trail = AuditTrail(secret_key="signature-test-key")
+        trail.log("actor", "tier", "EVENT", {"sample": "demo"})
+        trail.get_trail()[0]["current_hash"] = "overwritten"
+        assert trail.verify_integrity() is True
+
+
+    def test_delimiter_reassignment_cannot_preserve_signature(self):
+        trail = AuditTrail(secret_key="signature-test-key")
+        trail.log("a|b", "c", "EVENT", {"sample": "demo"})
+        trail.logs[0]["actor"] = "a"
+        trail.logs[0]["actor_tier"] = "b|c"
+        assert trail.verify_integrity() is False
+
+    def test_audit_actor_with_phi_is_blocked(self):
+        trail = AuditTrail(secret_key="signature-test-key")
+        with pytest.raises(SecurityException):
+            trail.log("MRN-994827", "tier", "EVENT", {"sample": "demo"})
+
+
+class TestAdditionalInputValidation:
+    @pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf")])
+    def test_nonfinite_metrics_are_rejected(self, value):
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            SystemTaskPayload(task_id="T1", target_identifier="SAMPLE", primary_metric=value)
+        with pytest.raises(ValidationError):
+            SystemTaskPayload(task_id="T1", target_identifier="SAMPLE", primary_metric=1, secondary_metric=value)
+
+    def test_nested_metadata_with_direct_identifier_is_blocked(self):
+        supervisor = SystemSupervisor(model_provider="mock")
+        payload = SystemTaskPayload(
+            task_id="T1", target_identifier="KEY-01", primary_metric=1,
+            attributes={"data": {"note": "MRN-994827"}}
+        )
+        with pytest.raises(SecurityException):
+            supervisor.process_task(payload)
+
+
+def test_api_does_not_expose_audit_trail_identifiers():
+    from fastapi.testclient import TestClient
+    from agents.api import app
+    response = TestClient(app).get("/api/audit/logs")
+    assert response.status_code == 200
+    assert "audit_trail" not in response.json()
+    assert "verified" in response.json()
+
+
+def test_api_rejects_recognizable_phi_with_validation_error():
+    from fastapi.testclient import TestClient
+    from agents.api import app
+    response = TestClient(app).post("/api/audit", json={
+        "task_id": "MRN-994827", "target_identifier": "DEMO",
+        "primary_metric": 12.0
+    })
+    assert response.status_code == 422
+    assert "MRN-994827" not in response.text
