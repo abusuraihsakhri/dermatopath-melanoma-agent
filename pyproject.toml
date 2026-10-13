@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dermatopath-melanoma-agent"
+name = "dermatopath-melanoma-engine"
 version = "2.0.0"
-description = "DermatoPath Sentinel: Cutaneous Melanoma Microstaging & Margin Safety Engine"
+description = "Demonstration rule engine for generic pathology workflow inputs; not validated clinical staging"
 readme = "README.md"
 authors = [{ name = "Dr. Abu Suraih Sakhri" }]
 license = { text = "MIT" }
@@ -26,7 +26,7 @@ dermatopath-melanoma-engine = "cli:main"
 dermatopath-melanoma-legacy = "dermatopath_melanoma_agent.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/abusuraihsakhri/dermatopath-melanoma-engine"
+Homepage = "https://github.com/abusuraihsakhri/dermatopath-melanoma-agent"
 Repository = "https://github.com/abusuraihsakhri/dermatopath-melanoma-agent.git"
 
 [tool.setuptools]
