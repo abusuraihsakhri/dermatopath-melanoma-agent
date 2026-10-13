@@ -3,25 +3,34 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dermatopath-melanoma-engine"
+name = "dermatopath-melanoma-agent"
 version = "2.0.0"
 description = "DermatoPath Sentinel: Cutaneous Melanoma Microstaging & Margin Safety Engine"
 readme = "README.md"
-authors = [{ name = "Dr. Abu Suraih Sakhri", email = "abusuraih@example.com" }]
+authors = [{ name = "Dr. Abu Suraih Sakhri" }]
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Topic :: Scientific/Engineering :: Medical Science Apps.",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 requires-python = ">=3.9"
-dependencies = []
+dependencies = ["pydantic>=2.0,<3"]
+
+[project.optional-dependencies]
+server = ["fastapi>=0.110,<1", "uvicorn>=0.27,<1"]
+test = ["pytest>=8,<10"]
 
 [project.scripts]
-dermatopath-melanoma-engine = "dermatopath_melanoma_agent.cli:main"
+dermatopath-melanoma-engine = "cli:main"
+dermatopath-melanoma-legacy = "dermatopath_melanoma_agent.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/abusuraihsakhri/dermatopath-melanoma-engine"
-Repository = "https://github.com/abusuraihsakhri/dermatopath-melanoma-engine.git"
+Repository = "https://github.com/abusuraihsakhri/dermatopath-melanoma-agent.git"
+
+[tool.setuptools]
+py-modules = ["cli", "derm_melanoma", "enrichment", "simulator"]
+
+[tool.setuptools.packages.find]
+include = ["agents*", "dermatopath_melanoma_agent*"]
