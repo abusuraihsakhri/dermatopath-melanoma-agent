@@ -25,6 +25,9 @@ class SystemSupervisor:
         PHIGuard.assert_no_phi(payload.task_id)
         PHIGuard.assert_no_phi(payload.target_identifier)
         PHIGuard.assert_no_phi(payload.status_descriptor)
+        # The regex guard is best-effort only: callers must supply synthetic data.
+        import json
+        PHIGuard.assert_no_phi(json.dumps(payload.attributes, ensure_ascii=False, default=str))
 
         # Multi-worker evaluations
         all_alerts: List[AgentAlert] = []
