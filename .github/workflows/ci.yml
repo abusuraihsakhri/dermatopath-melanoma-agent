@@ -2,7 +2,7 @@ name: Dermatopath Melanoma Engine CI/CD & Security Verification
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ master ]
   pull_request:
     branches: [ master, main ]
 
@@ -24,7 +24,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install fastapi uvicorn pydantic pytest
+        python -m pip install -e ".[server,test]" build
+
+    - name: Verify install and package build
+      run: |
+        python -m pip check
+        python -m compileall -q agents dermatopath_melanoma_agent cli.py derm_melanoma.py enrichment.py
+        python -m build
 
     - name: Run Pytest Suite
       run: |
